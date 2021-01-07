@@ -25,10 +25,14 @@ project(rotors_gazebo_plugins)
 
 set(BUILD_MAVLINK_TOGGLE TRUE) # Set to TRUE to build MAVLINK plugin
 
+
+
+
 if(${BUILD_MAVLINK_TOGGLE})
   find_package(mavlink QUIET)
   if(${mavlink_FOUND})
     message(STATUS " mavlink found, building MAVLINK_INTERFACE_PLUGIN.")
+   include_directories(${mavlink_INCLUDE_DIRS})
     set(BUILD_MAVLINK_INTERFACE_PLUGIN TRUE)
   else()
     message(STATUS " mavlink not found, not building MAVLINK_INTERFACE_PLUGIN.")

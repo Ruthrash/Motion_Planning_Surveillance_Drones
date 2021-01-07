@@ -172,7 +172,7 @@ vector<Point3D> DijkstraPlanner(Point3D start, Point3D goal, OcTree* tree)
             if (node == 0 && visited[new_x_arr][new_y_arr][new_pos.z]==0)
             {
                 // Check within 0.8 metres to make sure the drone has enough space to fly
-                for(OcTree::leaf_bbx_iterator it = tree-> begin_leafs_bbx(Vector3 (new_pos.x-0.8,new_pos.y-0.8, new_pos.z-0.8), Vector3 (new_pos.x+ 0.8,new_pos.y+0.8, new_pos.z+0.8)), end = tree-> end_leafs_bbx(); it != end; ++it)
+                for(OcTree::leaf_bbx_iterator it = tree-> begin_leafs_bbx(octomath::Vector3 (new_pos.x-0.8,new_pos.y-0.8, new_pos.z-0.8), octomath::Vector3 (new_pos.x+ 0.8,new_pos.y+0.8, new_pos.z+0.8)), end = tree-> end_leafs_bbx(); it != end; ++it)
                 {
                     occupied = tree->isNodeOccupied(*it);
                     if (occupied == 1)
@@ -191,8 +191,8 @@ vector<Point3D> DijkstraPlanner(Point3D start, Point3D goal, OcTree* tree)
             else if (visited[x_arr][y_arr][new_pos.z]== 0 && tree->isNodeOccupied(node)==0)
             {
                 // Check within 0.8 metres 
-                for (OcTree::leaf_bbx_iterator it = tree->begin_leafs_bbx(Vector3 (new_pos.x-0.8, new_pos.y-0.8, new_pos.z-0.8),
-                                                                          Vector3 (new_pos.x+0.8, new_pos.y+0.8, new_pos.z+0.8)), 
+                for (OcTree::leaf_bbx_iterator it = tree->begin_leafs_bbx(octomath::Vector3 (new_pos.x-0.8, new_pos.y-0.8, new_pos.z-0.8),
+                                                                          octomath::Vector3 (new_pos.x+0.8, new_pos.y+0.8, new_pos.z+0.8)), 
                                                                           end = tree->end_leafs_bbx(); it != end; ++it)
                 {
                     occupied = tree->isNodeOccupied(*it);

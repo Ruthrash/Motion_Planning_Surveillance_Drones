@@ -203,8 +203,8 @@ vector<Point3D> aStarPlanner(Point3D start, Point3D goal, OcTree* tree)
             if (node == 0 && visited[new_x_arr][new_y_arr][new_z] == 0) // if the node does not exist, assume it is unoccupied
             {
                 // Check within 0.8 metres to make sure the drone has enough space to fly
-                for (OcTree::leaf_bbx_iterator it = tree->begin_leafs_bbx(Vector3 (new_x-clearance, new_y-clearance, new_z-clearance), 
-                    Vector3 (new_x+clearance, new_y+clearance, new_z+clearance)), end = tree->end_leafs_bbx(); it != end; it++)
+                for (OcTree::leaf_bbx_iterator it = tree->begin_leafs_bbx( octomath::Vector3 (new_x-clearance, new_y-clearance, new_z-clearance), 
+                     octomath::Vector3 (new_x+clearance, new_y+clearance, new_z+clearance)), end = tree->end_leafs_bbx(); it != end; it++)
                 {
                     occupied = tree->isNodeOccupied(*it);
                     if (occupied == 1)
@@ -226,8 +226,8 @@ vector<Point3D> aStarPlanner(Point3D start, Point3D goal, OcTree* tree)
 
             else if (visited[new_x_arr][new_y_arr][new_z] == 0 && tree->isNodeOccupied(node)==0)
             {
-                for (OcTree::leaf_bbx_iterator it = tree->begin_leafs_bbx(Vector3 (new_x-clearance, new_y-clearance, new_z-clearance), 
-                    Vector3 (new_x+clearance, new_y+clearance, new_z+clearance)), end = tree->end_leafs_bbx(); it != end; it++)
+                for (OcTree::leaf_bbx_iterator it = tree->begin_leafs_bbx( octomath::Vector3 (new_x-clearance, new_y-clearance, new_z-clearance), 
+                     octomath::Vector3 (new_x+clearance, new_y+clearance, new_z+clearance)), end = tree->end_leafs_bbx(); it != end; it++)
                 {
                     occupied = tree->isNodeOccupied(*it);
                     if (occupied == 1)

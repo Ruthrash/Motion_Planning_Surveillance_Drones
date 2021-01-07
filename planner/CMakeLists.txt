@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0.2)
 project(planner)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+add_compile_options(-std=c++17)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -212,15 +212,27 @@ include_directories(
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
+
+
+
 add_executable(planner src/main_planner_node.cpp src/RRTstar.cpp src/WaypointPlanner.cpp)
+set_property(TARGET planner PROPERTY CXX_STANDARD 17)
+set_property(TARGET planner PROPERTY CXX_STANDARD_REQUIRED ON)
 target_link_libraries(planner ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
 add_executable(AStarOT_RT src/AStarOT_RT.cpp)
+set_property(TARGET AStarOT_RT PROPERTY CXX_STANDARD 17)
+set_property(TARGET AStarOT_RT PROPERTY CXX_STANDARD_REQUIRED ON)
 target_link_libraries(AStarOT_RT ${catkin_LIBRARIES})
 
 add_executable(AnytimeAstar_MG src/AnytimeAstar_MG.cpp)
+set_property(TARGET AnytimeAstar_MG PROPERTY CXX_STANDARD 17)
+set_property(TARGET AnytimeAstar_MG PROPERTY CXX_STANDARD_REQUIRED ON)
 target_link_libraries(AnytimeAstar_MG ${catkin_LIBRARIES})
 
 add_executable(Anytime_BT src/Anytime_BT.cpp)
+set_property(TARGET Anytime_BT PROPERTY CXX_STANDARD 17)
+set_property(TARGET Anytime_BT PROPERTY CXX_STANDARD_REQUIRED ON)
 target_link_libraries(Anytime_BT ${catkin_LIBRARIES})
 #add_dependencies(listener beginner_tutorials_generate_messages_cpp)
 #add_library(RRT src/RRT.cpp)

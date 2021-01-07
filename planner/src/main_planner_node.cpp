@@ -56,7 +56,7 @@ int main(int argc, char **argv)
     ros::Rate loop_rate(10);
 
     vector<vector<int>> plan;
-    string mapfilename = "/home/cerlab-controls/Desktop/catkin_ws/src/planner/map/town.ot";
+    string mapfilename = "/home/ruthrash/drone_ws/src/Motion_Planning_Surveillance_Drones/planner/map/town.ot";
     AbstractOcTree* tree = AbstractOcTree::read(mapfilename);
     OcTree* bt = dynamic_cast<OcTree*>(tree);
     if ((bt == NULL) || (tree == NULL)) {
