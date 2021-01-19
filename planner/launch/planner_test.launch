@@ -1,35 +1,16 @@
 <launch>
 
 
-
+      <arg name="test_set_number" default="0"/>
 <node pkg="planner" type="AnytimeAstar_MG" name="pathplanner" args="__ns:=firefly" output="screen"/>
-<!-- Start nodelet manager to run system nodelets. -->
-  <node name="robot" pkg="nodelet" type="nodelet" args="manager" respawn="true" output="screen"/>
-
- <!-- Automated tests node.-->
-   <node pkg="nodelet" type="nodelet" name="test_automation" args="manager" output="screen" />
-
-<node pkg="nodelet" type="nodelet" name="random_goals_nodelet" args="load test_automation/Goals test_automation" output="screen">
-       
-      <rosparam file="$(find test_automation)/test_params.yaml" command="load" subst_value="true"/>
-      <!--<param name="yaml_file_path" type="string" value="$(find test_automation)/yaml_files/keypoints.yaml"/>
-      <param name="yaml_file_test" type="string" value="$(arg yaml_test)"/>
-      <param name="csv_file_path" type="string" value="$(find test_automation)/csv_files/text_records.txt"/> -->
-      <param name="test_number" type="string" value="$(arg test_number)"/>
-      <param name="yaml_file_test" type="string" value="$(arg yaml_test)"/>
- <param name="robot_name" type="string" value="robot"/>
-      <param name="seed" type="int" value="125" />
-    </node>
 
 
+ <!-- Automated tests launch file-->
+	<include file="$(find qac_test_automation)/launch/drone_test.launch">
+	<arg name="test_set_number" value="$(arg test_set_number)"/>
+	</include>
 
-<node pkg="test_automation" type="test_feedback" name="feedback"  output="screen"  required="false">
-      <param name="csv_file_path" type="string" value="$(find test_automation)/csv_files/text_records.txt"/> 
-	<rosparam file="$(find test_automation)/test_params.yaml" command="load" />
-<param name="test_number" type="string" value="$(arg test_number)"/>  
-    </node>
-
-
+<node pkg="rviz" type="rviz" name="rviz" args="-d /home/ruthrash/Desktop/oct_default.rviz" output="log"/>
 
 
 

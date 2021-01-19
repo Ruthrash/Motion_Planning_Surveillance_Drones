@@ -5,7 +5,7 @@
   <node pkg="planner" type="AnytimeAstar_MG" name="pathplanner" args="__ns:=firefly" output="screen"/>
 
 
-
+<node pkg="rviz" type="rviz" name="rviz" args="-d /home/ruthrash/Desktop/oct_default.rviz" output="log"/>
 
 
 
