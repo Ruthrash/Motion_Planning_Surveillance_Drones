@@ -32,7 +32,11 @@
 #include <chrono>
 #include <visualization_msgs/Marker.h>
 #include <nav_msgs/Odometry.h>
-
+#include <nav_msgs/Path.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Path.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <geometry_msgs/PointStamped.h>
 using namespace std;
 using namespace octomap;
 using namespace octomath;
@@ -49,9 +53,11 @@ visualization_msgs::Marker sphere_list;
 // Publish on the grid
 struct Point3D
 {
-    int x, y, z;
+    float x, y, z;
 };
-
+std::vector<Point3D>global_goals;
+geometry_msgs::PoseWithCovarianceStamped global_current_pose;
+bool path_planned = false;
 struct PointWithCost
 {
     int x, y, z;
@@ -117,13 +123,16 @@ void publish_path(vector<Point3D> finalPath,ros::NodeHandle nh)
 {
     
     ROS_INFO("Started Final Path Publisher");
+    ros::Publisher path_pub  = nh.advertise<nav_msgs::Path>("drone_path", 10);
 
     ros::Publisher pub = nh.advertise<trajectory_msgs::MultiDOFJointTrajectory>(
       mav_msgs::default_topics::COMMAND_TRAJECTORY, 10);
     
     trajectory_msgs::MultiDOFJointTrajectory trajectory_msg;
+    nav_msgs::Path final_path_msg; 
+    final_path_msg.header.stamp = ros::Time::now();
     trajectory_msg.header.stamp = ros::Time::now();
-
+    final_path_msg.header.frame_id = "/world";
     // Visualization settings
     //visualization_msgs::Marker sphere_list;
     sphere_list.header.frame_id= "/world";
@@ -144,25 +153,37 @@ void publish_path(vector<Point3D> finalPath,ros::NodeHandle nh)
 
     ros::Rate loop_rate(10);
     geometry_msgs::Point p;
-    for (auto i : finalPath)
+    for(auto i:finalPath)
     {
+        geometry_msgs::PoseStamped pose_; 
+        pose_.header = final_path_msg.header; 
+        pose_.pose.position.x = i.x; pose_.pose.position.y = i.y, pose_.pose.position.z = i.z;
         p.x = i.x;
         p.y = i.y;
         p.z = i.z;
         sphere_list.points.push_back(p);
+        final_path_msg.poses.push_back(pose_);
+    }
+    path_pub.publish(final_path_msg);
+
+    for (auto i : finalPath)
+    {
+
         Eigen::Vector3d pos_des(i.x,i.y, i.z);
         double yaw_des = 0.0;
         mav_msgs::msgMultiDofJointTrajectoryFromPositionYaw(pos_des, yaw_des, &trajectory_msg);
       //  cout << "Publishing Points (x,y,z): " << i.x << ", " << i.y << ", " << i.z << endl;
+        
         pub.publish(trajectory_msg);
-        ros::Duration(1).sleep();
+        ros::Duration(0.5).sleep();
     }
-    
+   
+   
    cout << "All waypoints published" << endl;
 }
 
 // checks if a node is valid and unoccupied
-bool validateNode(Point3D point, OcTree* tree)
+bool validateNode(Point3D point, const OcTree* tree)
 {
     double x = point.x;
     double y = point.y;
@@ -211,7 +232,7 @@ int getID(int x, int y, int z)
     return id;
 }
 
-void aStarPlanner(Point3D start, Point3D goal, OcTree* tree,ros::NodeHandle nh)
+void aStarPlanner(Point3D start, Point3D goal, const OcTree* tree,ros::NodeHandle nh)
 {
     ROS_INFO("Starting A* Planner");
     // Define map bounds
@@ -380,7 +401,7 @@ void aStarPlanner(Point3D start, Point3D goal, OcTree* tree,ros::NodeHandle nh)
 } 
 
 typedef pair<int,Point3D> distGoal;
-void aStar(Point3D start, vector<Point3D> goals, OcTree* tree, ros::NodeHandle nh)
+void aStar(Point3D start, vector<Point3D> goals, const OcTree* tree, ros::NodeHandle nh)
 {
     priority_queue<PointWithCost, vector<PointWithCost>, compareD > pq_goal; 
   
@@ -398,7 +419,8 @@ void aStar(Point3D start, vector<Point3D> goals, OcTree* tree, ros::NodeHandle n
     while (!pq_goal.empty())
     {
         currPoint = pq_goal.top();
-        currGoal = {currPoint.x,currPoint.y,currPoint.z};
+        float x = currPoint.x, y = currPoint.y, z = currPoint.z;
+        currGoal = {x,y,z};
         pq_goal.pop();
 
         // Call A* for this goal
@@ -410,43 +432,25 @@ void aStar(Point3D start, vector<Point3D> goals, OcTree* tree, ros::NodeHandle n
     
 }
 
-int main(int argc, char** argv) {
-    ros::init(argc, argv, "AnytimeAstar_MG");
-    ros::NodeHandle nh;
-
-    Point3D start = {0,0,1};
-
-    // Points for corridor/maze
-    /*Point3D goal  = {-2,-1,2};
-    vector<Point3D> goals;
-    goals.push_back(goal);
-    goals.push_back({-6,1,2});
-    goals.push_back({1,3,2});*/
-
-    // Points for obstacle course 2
-    Point3D goal  = {4,2,5};
-    vector<Point3D> goals;
-    goals.push_back(goal);
-    goals.push_back({5,-1,6});
-    goals.push_back({2,-3,6});
-    goals.push_back({2,-3,3});
-    
-    // load the map
-
-    AbstractOcTree* tree = AbstractOcTree::read("/home/akshit/final2.ot");
-    OcTree* bt = dynamic_cast<OcTree*>(tree);
-    
-
+void PathPlanner(std::vector<Point3D> &goals, const OcTree* bt, ros::NodeHandle nh)
+{
     // Validate start and goal locations
-    bool startValid = validateNode(start, bt);
-    bool goalValid  = validateNode(goal, bt);
+    //bool startValid = validateNode(start, bt);
+   // bool goalValid  = validateNode(goal, bt);
+   //Point3D start = {5,5,5};
+   Point3D start = {float(global_current_pose.pose.pose.position.x),
+                    float(global_current_pose.pose.pose.position.y),
+                    float(global_current_pose.pose.pose.position.z)};
+   //bool startValid = validateNode(start,bt), goalValid = validateNode(goals[0],bt);
+   bool startValid = true, goalValid = validateNode(goals[0],bt);
     auto itr = goals.begin();
     for (auto i:goals)
     {
         bool checkGoal = validateNode(i,bt);
         if (checkGoal == false)
         {
-            ROS_ERROR("Goal %d %d %d is not valid. Removing from goal list \n",i.x,i.y,i.z);
+            //ROS_ERROR("Goal %d %d %d is not valid. Removing from goal list \n",i.x,i.y,i.z);
+            ROS_ERROR("Goal is not valid. Removing from goal list \n");
             goals.erase(itr);
         }
         else
@@ -457,7 +461,7 @@ int main(int argc, char** argv) {
     if (startValid == false)
     {
         ROS_ERROR("Start Position is not valid/free");
-        return 0;
+        return ;
     }
 
     else 
@@ -468,24 +472,97 @@ int main(int argc, char** argv) {
     if (goalValid == false)
     {
         ROS_ERROR("Goal Position is not valid/free");
-        return 0;
+        return ;
     }
 
     else 
     {
         printf("Goal position is valid \n");
     }
-    aStar(start, goals, bt,nh);
-    aStarPlanner(goal,start,bt,nh);
+    aStarPlanner(start, goals[0], bt,nh);
+    //aStarPlanner(goal,start,bt,nh);
+    //aStarPlanner(goals[0],start,bt,nh);
+    std::cout<<"goal:"<<goals[0].x<<goals[0].y<<goals[0].z<<"\n";
     cout << "Total Planning Time(s): " << plan_time << endl;
     cout << "Total cost of path: " << total_cost << endl;
     cout << "Total states expanded: " << tot_states << endl;
-    ros::Publisher marker_pub = nh.advertise<visualization_msgs::Marker>("drone_trajectory", 10);
+}
+
+void goalsCallback(const geometry_msgs::PointStamped & goal_msg)
+{
+    //float
+    Point3D goal  = {float(goal_msg.point.x),float(goal_msg.point.y),float(goal_msg.point.z)};
+    //Point3D goal  = {2,31,0.21};
+    std::vector<Point3D> goals;
+    //goals.pop();
+    goals.push_back(goal);
+    //goals.push_back({-27,25,30}); // radio tower
+    //goals.push_back({2.86,-4.04,0.21});
+    //goals.push_back({-19,-40,11.39});
+    //goals.push_back({-0.79,10,0.8});
+
+    std::cout<<"callback\n";
+    // load the map
+    global_goals = goals;
+    path_planned = false;
     
+    //PathPlanner(goals, bt, nh);
+}
+
+void poseCallback(const geometry_msgs::PoseWithCovarianceStamped & pose_msg)
+{
+    global_current_pose = pose_msg; 
+}
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, "AnytimeAstar_MG");
+    ros::NodeHandle nh;
+
+
+   
+
+    // Points for corridor/maze
+    /*Point3D goal  = {-2,-1,2};
+    vector<Point3D> goals;
+    goals.push_back(goal);
+    goals.push_back({-6,1,2});
+    goals.push_back({1,3,2});*/
+
+    /* Points for obstacle course 2
+    Point3D goal  = {4,2,5};
+    vector<Point3D> goals;
+    goals.push_back(goal);
+    goals.push_back({5,-1,6});
+    goals.push_back({2,-3,6});
+    goals.push_back({2,-3,3});
+    
+    Point3D goal  = {35,-5,15};
+    vector<Point3D> goals;
+    goals.push_back(goal);
+    //goals.push_back({-27,25,30}); // radio tower
+    goals.push_back({-35,-10,15});
+    goals.push_back({-25,30,15});
+    goals.push_back({-30,20,15});
+      */
+    
+    AbstractOcTree* tree = AbstractOcTree::read("/home/ruthrash/drone_ws/src/Motion_Planning_Surveillance_Drones/planner/map/town.ot");
+    OcTree* bt = dynamic_cast<OcTree*>(tree);
+    ros::Publisher marker_pub = nh.advertise<visualization_msgs::Marker>("drone_trajectory", 10);
+    ros::Publisher path_pub  = nh.advertise<nav_msgs::Path>("drone_path", 10);
+    ros::Subscriber current_pose_sub = nh.subscribe("/firefly/odometry_sensor1/pose_with_covariance", 5, poseCallback);
+    ros::Subscriber sub = nh.subscribe("/clicked_point", 10, goalsCallback);
     while (ros::ok())
     {
+        //std::cout<<"in while loop\n";
         marker_pub.publish(sphere_list);
+        if(global_goals.size()!=0 && !path_planned)
+        {
+            PathPlanner(global_goals, bt, nh);
+            path_planned  = true;
+        }
+        
+        ros::spinOnce();
     }
-    ros::spinOnce();
+    
     ros::shutdown();
 }

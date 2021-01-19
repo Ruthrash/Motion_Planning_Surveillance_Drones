@@ -1,0 +1,14 @@
+<launch>
+
+
+
+  <node pkg="planner" type="AnytimeAstar_MG" name="pathplanner" args="__ns:=firefly" output="screen"/>
+
+
+
+
+
+
+</launch>
+
+

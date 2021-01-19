@@ -1,15 +1,18 @@
 <launch>
-  <rosparam command="load" file="$(find grid_map_demos)/config/octomap_to_gridmap_demo.yaml" />
+
 
   <!-- Load the octomap -->
-  <node pkg="octomap_server" type="octomap_server_static" name="octomap_server" args="$(find planner)/map/map1.ot" output="screen"/>
-
+	<rosparam param="use_sim_time">false</rosparam>
+  <node pkg="octomap_server" type="octomap_server_node" name="octomap_server" args="$(find planner)/map/town.ot" output="screen">
+	<param name="frame_id" value="world" />
+</node>
   <!-- Launch the octomap conversion node -->
-  <node pkg="grid_map_demos" type="octomap_to_gridmap_demo" name="octomap_to_gridmap_demo" output="screen" />
+
 
   <!-- Launch the grid map visualizer -->
-  <node pkg="grid_map_visualization" type="grid_map_visualization" name="grid_map_visualization" output="screen" />
+
 
   <!-- Launch RViz with the demo configuration -->
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find grid_map_demos)/rviz/octomap_to_gridmap_demo.rviz" />
+
+<node name="rviz" pkg="rviz" type="rviz" args="-d /home/ruthrash/Desktop/oct_default.rviz" />
 </launch>

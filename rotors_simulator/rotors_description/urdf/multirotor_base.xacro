@@ -66,13 +66,28 @@
         </geometry>
       </visual>
 
-      <collision>
+      <collision name="bump_sensor_collision">
         <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
           <box size="${body_width} ${body_width} ${body_height}" /> <!-- [m] [m] [m] -->
         </geometry>
       </collision>
     </link>
+
+   <gazebo reference="${robot_namespace}/base_link">
+<maxContacts>1</maxContacts>
+   <sensor name='body_contact' type='contact'>
+          <contact>
+            <collision>firefly/base_link_fixed_joint_lump__bump_sensor_collision_collision</collision>
+	   <topic>__default_topic__</topic>
+          </contact>
+   <plugin name="body_plugin" filename="libgazebo_ros_bumper.so">
+     	<alwaysOn>true</alwaysOn>
+         <bumperTopicName>body_contact</bumperTopicName>
+         <frameName>base_link</frameName>
+   </plugin>
+   </sensor>
+   </gazebo>
 
     <!-- attach multirotor_base_plugin to the base_link -->
     <gazebo>
