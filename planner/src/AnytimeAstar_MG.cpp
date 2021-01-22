@@ -44,7 +44,7 @@ using namespace Eigen;
 
 #define P1 73
 #define P2 89
-#define TIME_LIMIT 7000 // milliseconds
+#define TIME_LIMIT 500 // milliseconds
 
 double total_cost = 0;
 double plan_time = 0;
@@ -273,6 +273,7 @@ void aStarPlanner(Point3D start, Point3D goal, const OcTree* tree,ros::NodeHandl
 
     while (!open_list.empty())
     {
+        std::cout<<"In while loop\n";
         SearchPoint front = open_list.top();
         open_list.pop();
         currPos = front.pos;
@@ -300,7 +301,7 @@ void aStarPlanner(Point3D start, Point3D goal, const OcTree* tree,ros::NodeHandl
         
         if (front.parent.x == start.x && front.parent.y == start.y && front.parent.z == start.z)
         {
-            //cout << "Start Node assigned as parent" << endl;
+            std::cout << "Start Node assigned as parent" << endl;
         }
         count++;
         tot_states++;
@@ -403,6 +404,7 @@ void aStarPlanner(Point3D start, Point3D goal, const OcTree* tree,ros::NodeHandl
 typedef pair<int,Point3D> distGoal;
 void aStar(Point3D start, vector<Point3D> goals, const OcTree* tree, ros::NodeHandle nh)
 {
+    std::cout<<"In A* method\n";
     priority_queue<PointWithCost, vector<PointWithCost>, compareD > pq_goal; 
   
     PointWithCost currPoint;
@@ -479,13 +481,17 @@ void PathPlanner(std::vector<Point3D> &goals, const OcTree* bt, ros::NodeHandle 
     {
         printf("Goal position is valid \n");
     }
-    aStarPlanner(start, goals[0], bt,nh);
+    //aStar(start, goals, bt,nh);
+    aStar(start, goals, bt,nh);
     //aStarPlanner(goal,start,bt,nh);
-    //aStarPlanner(goals[0],start,bt,nh);
-    std::cout<<"goal:"<<goals[0].x<<goals[0].y<<goals[0].z<<"\n";
+    aStarPlanner(goals[0],start,bt,nh);
+    std::cout<<"start:"<<start.x<<","<<start.y<<","<<start.z<<"\n";
+    std::cout<<"goal:"<<goals[0].x<<","<<goals[0].y<<","<<goals[0].z<<"\n";
     cout << "Total Planning Time(s): " << plan_time << endl;
     cout << "Total cost of path: " << total_cost << endl;
     cout << "Total states expanded: " << tot_states << endl;
+    global_goals.clear();
+    path_planned = false;
 }
 
 void goalsCallback(const geometry_msgs::PoseStamped & goal_msg)
@@ -493,10 +499,8 @@ void goalsCallback(const geometry_msgs::PoseStamped & goal_msg)
     //float
     Point3D goal  = {float(goal_msg.pose.position.x),float(goal_msg.pose.position.y),float(goal_msg.pose.position.z)};
     std::vector<Point3D> goals;
-    
+    goals.clear();
     goals.push_back(goal);
-    
-
     std::cout<<"callback\n";
     // load the map
     global_goals = goals;
@@ -508,14 +512,59 @@ void goalsCallback(const geometry_msgs::PoseStamped & goal_msg)
 void poseCallback(const geometry_msgs::PoseWithCovarianceStamped & pose_msg)
 {
     global_current_pose = pose_msg; 
+
 }
 
 int main(int argc, char** argv) {
     ros::init(argc, argv, "AnytimeAstar_MG");
-    ros::NodeHandle nh;
+    ros::NodeHandle nh;    
+    AbstractOcTree* tree = AbstractOcTree::read("/home/ruthrash/drone_ws/src/Motion_Planning_Surveillance_Drones/planner/map/town.ot");
+    OcTree* bt = dynamic_cast<OcTree*>(tree);
+    ros::Publisher marker_pub = nh.advertise<visualization_msgs::Marker>("drone_trajectory", 10);
+    ros::Publisher path_pub  = nh.advertise<nav_msgs::Path>("drone_path", 10);
+    ros::Subscriber current_pose_sub = nh.subscribe("/firefly/ground_truth/pose_with_covariance", 5, poseCallback);
+    ros::Subscriber sub = nh.subscribe("/clicked_point_test", 10, goalsCallback);
+    while (ros::ok())
+    {
+        ros::spinOnce();
+        //std::cout<<"in while loop\n";
+        marker_pub.publish(sphere_list);
+        if(global_goals.size()!=0 && !path_planned)
+        {
+            PathPlanner(global_goals, bt, nh);
+            path_planned  = true;
+        }
+        //std::cout<<"Flag: "<<path_planned<<"\n";
+        
+    }
+    
+    ros::shutdown();
+}
+
+/*
+void goalsCallback(const geometry_msgs::PointStamped & goal_msg)
+{
+    //float
+    Point3D goal  = {float(goal_msg.point.x),float(goal_msg.point.y),float(goal_msg.point.z)};
+    //Point3D goal  = {2,31,0.21};
+    std::vector<Point3D> goals;
+    //goals.pop();
+    goals.push_back(goal);
+    //goals.push_back({-27,25,30}); // radio tower
+    //goals.push_back({2.86,-4.04,0.21});
+    //goals.push_back({-19,-40,11.39});
+    //goals.push_back({-0.79,10,0.8});
+    std::cout<<"callback\n";
+    // load the map
+    global_goals = goals;
+    path_planned = false;
+    
+    //PathPlanner(goals, bt, nh);
+}*/
 
 
-   
+
+
 
     // Points for corridor/maze
     /*Point3D goal  = {-2,-1,2};
@@ -540,47 +589,3 @@ int main(int argc, char** argv) {
     goals.push_back({-25,30,15});
     goals.push_back({-30,20,15});
       */
-    
-    AbstractOcTree* tree = AbstractOcTree::read("/home/ruthrash/drone_ws/src/Motion_Planning_Surveillance_Drones/planner/map/town.ot");
-    OcTree* bt = dynamic_cast<OcTree*>(tree);
-    ros::Publisher marker_pub = nh.advertise<visualization_msgs::Marker>("drone_trajectory", 10);
-    ros::Publisher path_pub  = nh.advertise<nav_msgs::Path>("drone_path", 10);
-    ros::Subscriber current_pose_sub = nh.subscribe("/firefly/odometry_sensor1/pose_with_covariance", 5, poseCallback);
-    ros::Subscriber sub = nh.subscribe("/clicked_point_test", 10, goalsCallback);
-    while (ros::ok())
-    {
-        //std::cout<<"in while loop\n";
-        marker_pub.publish(sphere_list);
-        if(global_goals.size()!=0 && !path_planned)
-        {
-            PathPlanner(global_goals, bt, nh);
-            path_planned  = true;
-        }
-        std::cout<<"Flag: "<<path_planned<<"\n";
-        ros::spinOnce();
-    }
-    
-    ros::shutdown();
-}
-
-/*
-void goalsCallback(const geometry_msgs::PointStamped & goal_msg)
-{
-    //float
-    Point3D goal  = {float(goal_msg.point.x),float(goal_msg.point.y),float(goal_msg.point.z)};
-    //Point3D goal  = {2,31,0.21};
-    std::vector<Point3D> goals;
-    //goals.pop();
-    goals.push_back(goal);
-    //goals.push_back({-27,25,30}); // radio tower
-    //goals.push_back({2.86,-4.04,0.21});
-    //goals.push_back({-19,-40,11.39});
-    //goals.push_back({-0.79,10,0.8});
-
-    std::cout<<"callback\n";
-    // load the map
-    global_goals = goals;
-    path_planned = false;
-    
-    //PathPlanner(goals, bt, nh);
-}*/

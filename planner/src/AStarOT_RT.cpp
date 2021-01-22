@@ -315,7 +315,7 @@ int main(int argc, char** argv) {
     Point3D goal  = {-4,-2,2};
 
     // load the map
-    AbstractOcTree* tree = AbstractOcTree::read("/home/akshit/corridor.ot");
+    AbstractOcTree* tree = AbstractOcTree::read("/home/ruthrash/drone_ws/src/Motion_Planning_Surveillance_Drones/planner/map/town.ot");
     OcTree* bt = dynamic_cast<OcTree*>(tree);
 
     // Validate start and goal locations
