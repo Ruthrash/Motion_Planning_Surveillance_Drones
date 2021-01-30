@@ -3,6 +3,7 @@
 
       <arg name="test_set_number" default="0"/>
 <node pkg="planner" type="AnytimeAstar_MG" name="pathplanner" args="__ns:=firefly" output="screen"/>
+<<<<<<< HEAD
 
 	<include file="$(find rotors_gazebo)/launch/mav_hovering_example.launch">
 	<arg name="mav_name" value="firefly"/>
@@ -19,10 +20,21 @@
   <node pkg="octomap_server" type="octomap_server_node" name="octomap_server" args="$(find planner)/map/town.ot" output="screen">
 	<param name="frame_id" value="world" />
 </node>
+=======
 
+>>>>>>> 192f569cddbf4c149fe0a6cd4dda8e901b5cc1d9
 
+ <!-- Automated tests launch file-->
+	<include file="$(find qac_test_automation)/launch/drone_test.launch">
+	<arg name="test_set_number" value="$(arg test_set_number)"/>
+	</include>
+
+<<<<<<< HEAD
 <!--
 <node pkg="rviz" type="rviz" name="rviz" args="-d /home/ruthrash/Desktop/oct_default.rviz" output="log"/>-->
+=======
+<node pkg="rviz" type="rviz" name="rviz" args="-d /home/ruthrash/Desktop/oct_default.rviz" output="log"/>
+>>>>>>> 192f569cddbf4c149fe0a6cd4dda8e901b5cc1d9
 
 
 
