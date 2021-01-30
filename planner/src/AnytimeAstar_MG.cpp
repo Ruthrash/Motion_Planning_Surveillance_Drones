@@ -175,6 +175,7 @@ void publish_path(vector<Point3D> finalPath,ros::NodeHandle nh)
       //  cout << "Publishing Points (x,y,z): " << i.x << ", " << i.y << ", " << i.z << endl;
         
         pub.publish(trajectory_msg);
+        path_pub.publish(final_path_msg);
         ros::Duration(0.5).sleep();
     }
    
@@ -509,6 +510,29 @@ void goalsCallback(const geometry_msgs::PointStamped & goal_msg)
     //PathPlanner(goals, bt, nh);
 }
 
+
+void goalsposeCallback(const geometry_msgs::PoseStamped & goal_msg)
+{
+    //float
+    Point3D goal  = {float(goal_msg.pose.position.x),float(goal_msg.pose.position.y),float(goal_msg.pose.position.z)};
+    //Point3D goal  = {2,31,0.21};
+    std::vector<Point3D> goals;
+    //goals.pop();
+    goals.push_back(goal);
+    //goals.push_back({-27,25,30}); // radio tower
+    //goals.push_back({2.86,-4.04,0.21});
+    //goals.push_back({-19,-40,11.39});
+    //goals.push_back({-0.79,10,0.8});
+
+    std::cout<<"callback\n";
+    // load the map
+    global_goals = goals;
+    path_planned = false;
+    
+    //PathPlanner(goals, bt, nh);
+}
+
+
 void poseCallback(const geometry_msgs::PoseWithCovarianceStamped & pose_msg)
 {
     global_current_pose = pose_msg; 
@@ -551,10 +575,12 @@ int main(int argc, char** argv) {
     ros::Publisher path_pub  = nh.advertise<nav_msgs::Path>("drone_path", 10);
     ros::Subscriber current_pose_sub = nh.subscribe("/firefly/odometry_sensor1/pose_with_covariance", 5, poseCallback);
     ros::Subscriber sub = nh.subscribe("/clicked_point", 10, goalsCallback);
+
+    ros::Subscriber sub1 = nh.subscribe("/clicked_point_pose", 10, goalsposeCallback);
     while (ros::ok())
     {
         //std::cout<<"in while loop\n";
-        marker_pub.publish(sphere_list);
+        //marker_pub.publish(sphere_list);
         if(global_goals.size()!=0 && !path_planned)
         {
             PathPlanner(global_goals, bt, nh);
