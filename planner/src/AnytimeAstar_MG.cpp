@@ -570,13 +570,9 @@ int main(int argc, char** argv) {
     ros::Publisher marker_pub = nh.advertise<visualization_msgs::Marker>("drone_trajectory", 10);
     ros::Publisher path_pub  = nh.advertise<nav_msgs::Path>("drone_path", 10);
     ros::Subscriber current_pose_sub = nh.subscribe("/firefly/odometry_sensor1/pose_with_covariance", 5, poseCallback);
-<<<<<<< HEAD
     ros::Subscriber sub = nh.subscribe("/clicked_point", 10, goalsCallback);
 
     ros::Subscriber sub1 = nh.subscribe("/clicked_point_pose", 10, goalsposeCallback);
-=======
-    ros::Subscriber sub = nh.subscribe("/clicked_point_test", 10, goalsCallback);
->>>>>>> 192f569cddbf4c149fe0a6cd4dda8e901b5cc1d9
     while (ros::ok())
     {
         //std::cout<<"in while loop\n";
