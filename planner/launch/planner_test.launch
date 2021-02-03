@@ -21,8 +21,8 @@
 </node>
 
 
-<!--
-<node pkg="rviz" type="rviz" name="rviz" args="-d /home/ruthrash/Desktop/oct_default.rviz" output="log"/>-->
+
+<node pkg="rviz" type="rviz" name="rviz" args="-d /home/ruthz/Desktop/oct_default.rviz" output="log"/>
 
 
 

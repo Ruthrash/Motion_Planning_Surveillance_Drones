@@ -28,6 +28,7 @@
 #include <random>
 #include <stdio.h>
 
+#include <ros/ros.h>
 #include <boost/array.hpp>
 #include <boost/bind.hpp>
 #include <gazebo/common/common.hh>
@@ -40,7 +41,7 @@
 
 #include "rotors_gazebo_plugins/common.h"
 #include "rotors_gazebo_plugins/sdf_api_wrapper.hpp"
-
+#include "qac_test_automation/SensorDisturbance.h"
 #include "Odometry.pb.h"
 
 
@@ -84,16 +85,30 @@ class GazeboOdometryPlugin : public ModelPlugin {
         gazebo_sequence_(kDefaultGazeboSequence),
         odometry_sequence_(kDefaultOdometrySequence),
         covariance_image_scale_(kDefaultCovarianceImageScale),
-        pubs_and_subs_created_(false) {}
+        pubs_and_subs_created_(false) {
+
+ROS_INFO("!!!!Constructor!!!!");}
 
   ~GazeboOdometryPlugin();
 
   void InitializeParams();
   void Publish();
-
+  bool add_noise(qac_test_automation::SensorDisturbance::Request  &req,
+         qac_test_automation::SensorDisturbance::Response &res);
  protected:
   void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
   void OnUpdate(const common::UpdateInfo& /*_info*/);
+
+//// \brief type of sensor disturbance and time variable used for the same
+private: int type = 0; double begin;
+
+//// \brief Service object used to setup client 
+private: ros::ServiceServer my_service;
+/// \brief Gaussian noise parameters
+private: double mean = 0.0, gaussian_noise_ = 0.0;
+
+private: ros::NodeHandle nh;
+
 
  private:
 
@@ -118,7 +133,7 @@ class GazeboOdometryPlugin : public ModelPlugin {
   std::string parent_frame_id_;
   std::string child_frame_id_;
   std::string link_name_;
-
+  std::string suffix_;
   NormalDistribution position_n_[3];
   NormalDistribution attitude_n_[3];
   NormalDistribution linear_velocity_n_[3];

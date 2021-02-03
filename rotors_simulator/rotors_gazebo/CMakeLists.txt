@@ -53,6 +53,7 @@ catkin_package(
     roscpp
     sensor_msgs
     octomap_ros
+qac_test_automation
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS})

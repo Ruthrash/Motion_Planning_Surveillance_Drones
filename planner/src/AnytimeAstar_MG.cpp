@@ -176,7 +176,7 @@ void publish_path(vector<Point3D> finalPath,ros::NodeHandle nh)
         
         pub.publish(trajectory_msg);
         path_pub.publish(final_path_msg);
-        ros::Duration(0.5).sleep();
+        ros::Duration(1.2).sleep();
     }
    
    
@@ -569,7 +569,7 @@ int main(int argc, char** argv) {
     goals.push_back({-30,20,15});
       */
     
-    AbstractOcTree* tree = AbstractOcTree::read("/home/ruthrash/drone_ws/src/Motion_Planning_Surveillance_Drones/planner/map/town.ot");
+    AbstractOcTree* tree = AbstractOcTree::read("/home/ruthz/drone_ws/src/Motion_Planning_Surveillance_Drones/planner/map/town.ot");
     OcTree* bt = dynamic_cast<OcTree*>(tree);
     ros::Publisher marker_pub = nh.advertise<visualization_msgs::Marker>("drone_trajectory", 10);
     ros::Publisher path_pub  = nh.advertise<nav_msgs::Path>("drone_path", 10);

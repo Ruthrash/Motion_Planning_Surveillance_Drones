@@ -67,6 +67,20 @@ void GazeboOdometryPlugin::Load(physics::ModelPtr _model,
 
   odometry_queue_.clear();
 
+
+   if(!ros::isInitialized())
+      {
+	int argc = 0;
+	char **argv = NULL;
+	ros::init(argc, argv, "encoder_disturbance_service", ros::init_options::NoSigintHandler);
+ 
+      }
+
+
+
+
+
+
   if (_sdf->HasElement("robotNamespace"))
     namespace_ = _sdf->GetElement("robotNamespace")->Get<std::string>();
   else
@@ -119,6 +133,8 @@ void GazeboOdometryPlugin::Load(physics::ModelPtr _model,
                            parent_frame_id_);
   getSdfParam<std::string>(_sdf, "childFrameId", child_frame_id_,
                            child_frame_id_);
+  getSdfParam<std::string>(_sdf, "suffix", suffix_,
+                           suffix_);
   getSdfParam<SdfVector3>(_sdf, "noiseNormalPosition", noise_normal_position,
                           zeros3);
   getSdfParam<SdfVector3>(_sdf, "noiseNormalQuaternion",
@@ -143,12 +159,13 @@ void GazeboOdometryPlugin::Load(physics::ModelPtr _model,
   getSdfParam<double>(_sdf, "covarianceImageScale", covariance_image_scale_,
                       covariance_image_scale_);
 
+ my_service = nh.advertiseService("/ODOM/sensor_disturbance_"+suffix_, &gazebo::GazeboOdometryPlugin::add_noise, this);
+
   parent_link_ = world_->EntityByName(parent_frame_id_);
   if (parent_link_ == NULL && parent_frame_id_ != kDefaultParentFrameId) {
     gzthrow("[gazebo_odometry_plugin] Couldn't find specified parent link \""
             << parent_frame_id_ << "\".");
   }
-
   position_n_[0] = NormalDistribution(0, noise_normal_position.X());
   position_n_[1] = NormalDistribution(0, noise_normal_position.Y());
   position_n_[2] = NormalDistribution(0, noise_normal_position.Z());
@@ -199,6 +216,28 @@ void GazeboOdometryPlugin::Load(physics::ModelPtr _model,
   angular_velocity_u_[2] = UniformDistribution(
       -noise_uniform_angular_velocity.Z(), noise_uniform_angular_velocity.Z());
 
+if(type ==1 )
+{
+  position_n_[0] = NormalDistribution(mean, gaussian_noise_);
+  position_n_[1] = NormalDistribution(mean, gaussian_noise_);
+  position_n_[2] = NormalDistribution(mean, gaussian_noise_);
+
+  attitude_n_[0] = NormalDistribution(mean, gaussian_noise_);
+  attitude_n_[1] = NormalDistribution(mean, gaussian_noise_);
+  attitude_n_[2] = NormalDistribution(mean, gaussian_noise_);
+
+
+  position_u_[0] = UniformDistribution(-gaussian_noise_,
+                                       gaussian_noise_);
+  position_u_[1] = UniformDistribution(-gaussian_noise_,
+                                       gaussian_noise_);
+  position_u_[2] = UniformDistribution(-gaussian_noise_,
+                                       gaussian_noise_);
+}
+
+
+
+
   // Fill in covariance. We omit uniform noise here.
   Eigen::Map<Eigen::Matrix<double, 6, 6> > pose_covariance(
       pose_covariance_matrix_.data());
@@ -243,6 +282,7 @@ void GazeboOdometryPlugin::OnUpdate(const common::UpdateInfo& _info) {
     pubs_and_subs_created_ = true;
   }
 
+//ROS_INFO("!!!!!!!!!!Type = %d", type );
   // C denotes child frame, P parent frame, and W world frame.
   // Further C_pose_W_P denotes pose of P wrt. W expressed in C.
   ignition::math::Pose3d W_pose_W_C = link_->WorldCoGPose();
@@ -315,12 +355,27 @@ void GazeboOdometryPlugin::OnUpdate(const common::UpdateInfo& _info) {
         (world_->SimTime()).nsec + static_cast<int32_t>(unknown_delay_));
     odometry.set_child_frame_id(child_frame_id_);
 
+//ROS_INFO("!!!!!!!!!!Sample=%d", type );
+
+
     odometry.mutable_pose()->mutable_pose()->mutable_position()->set_x(
-        gazebo_pose.Pos().X());
+        gazebo_pose.Pos().X() );//adding noise
     odometry.mutable_pose()->mutable_pose()->mutable_position()->set_y(
-        gazebo_pose.Pos().Y());
+        gazebo_pose.Pos().Y() );//adding noise
     odometry.mutable_pose()->mutable_pose()->mutable_position()->set_z(
-        gazebo_pose.Pos().Z());
+        gazebo_pose.Pos().Z() );//adding noise
+
+
+   if(type==1)
+	{
+    odometry.mutable_pose()->mutable_pose()->mutable_position()->set_x(
+        gazebo_pose.Pos().X() + ignition::math::Rand::DblNormal(mean,gaussian_noise_));//adding noise
+    odometry.mutable_pose()->mutable_pose()->mutable_position()->set_y(
+        gazebo_pose.Pos().Y() + ignition::math::Rand::DblNormal(mean,gaussian_noise_));//adding noise
+    odometry.mutable_pose()->mutable_pose()->mutable_position()->set_z(
+        gazebo_pose.Pos().Z() + ignition::math::Rand::DblNormal(mean,gaussian_noise_));//adding noise
+	}
+
 
     odometry.mutable_pose()->mutable_pose()->mutable_orientation()->set_x(
         gazebo_pose.Rot().X());
@@ -479,7 +534,34 @@ void GazeboOdometryPlugin::OnUpdate(const common::UpdateInfo& _info) {
 
     if (odometry_pub_->HasConnections()) {
       // DEBUG
-      odometry_pub_->Publish(odometry_msg);
+
+
+if(type==1)//large spikes in sensor value for a short period of time (2secs)
+    {
+      double now = ros::Time::now().toSec(); 
+      if(now-begin>=2)
+	{
+	type = 0;
+        mean = 0; 
+        gaussian_noise_=0.008; 
+	}
+    }
+    if(type!=2){
+	odometry_pub_->Publish(odometry_msg);
+    }
+    if(type==2)
+    {
+      double now = ros::Time::now().toSec();
+      if(now-begin >= 3)
+        {
+          begin = now; 
+	odometry_pub_->Publish(odometry_msg);
+        }
+    }  
+
+
+
+      
     }
 
     //==============================================//
@@ -511,6 +593,74 @@ void GazeboOdometryPlugin::OnUpdate(const common::UpdateInfo& _info) {
 
   ++gazebo_sequence_;
 }
+
+
+
+
+
+
+
+bool GazeboOdometryPlugin::add_noise(qac_test_automation::SensorDisturbance::Request  &req,
+         qac_test_automation::SensorDisturbance::Response &res)
+{
+  
+	  type = req.type;
+	  if(req.disturb == 1 && req.type == 1)
+	  {  
+	     begin = ros::Time::now().toSec();//get time in seconds 
+	     mean = 2;
+	     gaussian_noise_ = 7;
+	     res.status = 1;
+	      	
+	  }
+	  else if(req.disturb == 1 && req.type == 2)//intermittent publishing of messages for every 5 seconds
+	  {
+	   begin = ros::Time::now().toSec();//get time in seconds
+	   mean = 0; 
+	   gaussian_noise_=0.008;
+	   res.status = 1; 
+	  }
+	  
+	  if(req.disturb == 0)
+	  {
+	   mean = 0; 
+	   gaussian_noise_=0.008;
+	   res.status = 0;
+	  } 
+	  ROS_INFO("!!!!!!!!!!Odom request: disturb=%d, type=%d, ", req.disturb, req.type);
+	  ROS_INFO("sending back response: [%d]", res.status);
+      
+  return true;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void GazeboOdometryPlugin::CreatePubsAndSubs() {
   // Create temporary "ConnectGazeboToRosTopic" publisher and message
