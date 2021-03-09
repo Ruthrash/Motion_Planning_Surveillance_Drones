@@ -13,6 +13,17 @@
       </attenuation>
       <direction>-0.5 0.1 -0.9</direction>
     </light>
+<gui fullscreen='0'>
+     <camera name="user_camera">
+        <track_visual>
+          <name>firefly</name>
+          <static>true</static>
+          <use_model_frame>true</use_model_frame>
+          <xyz>-8 0 0</xyz>
+          <inherit_yaw>true</inherit_yaw>
+        </track_visual>
+    </camera>
+</gui>
     <model name='ground_plane'>
       <static>1</static>
       <link name='link'>
