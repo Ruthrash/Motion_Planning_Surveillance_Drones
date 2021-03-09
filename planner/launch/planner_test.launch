@@ -10,19 +10,20 @@
 	<arg name="gui" value="true"/>
 	</include>
 
- <!-- Automated tests launch file-->
-	<include file="$(find qac_test_automation)/launch/drone_test.launch">
-	<arg name="test_set_number" value="$(arg test_set_number)"/>
-	</include>
+
 
 
   <node pkg="octomap_server" type="octomap_server_node" name="octomap_server" args="$(find planner)/map/town.ot" output="screen">
 	<param name="frame_id" value="world" />
 </node>
 
+ <!-- Automated tests launch file-->
+	<include file="$(find qac_test_automation)/launch/drone_test.launch">
+	<arg name="test_set_number" value="$(arg test_set_number)"/>
+	</include>
 
-<!--
-<node pkg="rviz" type="rviz" name="rviz" args="-d /home/ruthrash/Desktop/oct_default.rviz" output="log"/>-->
+
+<node pkg="rviz" type="rviz" name="rviz" args="-d /home/ruthz/Desktop/oct_default.rviz" output="log"/>
 
 
 

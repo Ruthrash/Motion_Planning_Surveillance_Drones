@@ -120,6 +120,7 @@ if (NOT NO_ROS)
     rotors_control
     std_srvs
     tf
+qac_test_automation
   )
 endif()
 

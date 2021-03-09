@@ -382,6 +382,7 @@
         <positionTopic>${position_topic}</positionTopic>
         <transformTopic>${transform_topic}</transformTopic>
         <odometryTopic>${odometry_topic}</odometryTopic>
+	<suffix>${odometry_sensor_suffix}</suffix>
         <parentFrameId>${parent_frame_id}</parentFrameId> <!-- Use the scoped link name here. e.g. Model::link. -->
         <childFrameId>${child_frame_id}</childFrameId>
         <measurementDivisor>${measurement_divisor}</measurementDivisor> <!-- only every (seq % measurementDivisor) == 0 measurement is published [int] -->
@@ -739,9 +740,9 @@
       </xacro:vi_sensor_depth_macro>
     </xacro:if>
 
-    <!-- Groundtruth -->
+    <!-- Groundtruth 
     <xacro:if value="${enable_ground_truth}">
-      <!-- Odometry Sensor -->
+      
       <xacro:odometry_plugin_macro
         namespace="${namespace}/ground_truth"
         odometry_sensor_suffix=""
@@ -768,10 +769,10 @@
         enable_odometry_map="false"
         odometry_map=""
         image_scale="">
-        <inertia ixx="0.00001" ixy="0.0" ixz="0.0" iyy="0.00001" iyz="0.0" izz="0.00001" /> <!-- [kg m^2] [kg m^2] [kg m^2] [kg m^2] [kg m^2] [kg m^2] -->
+        <inertia ixx="0.00001" ixy="0.0" ixz="0.0" iyy="0.00001" iyz="0.0" izz="0.00001" /> 
         <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
       </xacro:odometry_plugin_macro>
-    </xacro:if>
+    </xacro:if>--><!-- Odometry Sensor -->
 
     <!-- ADIS16448 IMU. -->
     <xacro:imu_plugin_macro
@@ -840,9 +841,9 @@
       enable_odometry_map="false"
       odometry_map=""
       image_scale="">
-      <inertia ixx="0.00001" ixy="0.0" ixz="0.0" iyy="0.00001" iyz="0.0" izz="0.00001" /> <!-- [kg m^2] [kg m^2] [kg m^2] [kg m^2] [kg m^2] [kg m^2] -->
+      <inertia ixx="0.00001" ixy="0.0" ixz="0.0" iyy="0.00001" iyz="0.0" izz="0.00001" /> 
       <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
-    </xacro:odometry_plugin_macro>
+    </xacro:odometry_plugin_macro> <!-- [kg m^2] [kg m^2] [kg m^2] [kg m^2] [kg m^2] [kg m^2] -->
   </xacro:macro>
 
   <xacro:macro name="default_imu" params="namespace parent_link">

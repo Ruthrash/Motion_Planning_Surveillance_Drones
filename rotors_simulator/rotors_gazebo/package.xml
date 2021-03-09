@@ -29,6 +29,7 @@
   <depend>sensor_msgs</depend>
   <depend>xacro</depend>
   <depend>octomap_ros</depend>
+<depend>qac_test_automation</depend>
   <build_depend>octomap</build_depend>
   <exec_depend>octomap</exec_depend>
 

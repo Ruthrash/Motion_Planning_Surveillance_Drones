@@ -179,10 +179,7 @@
       <pose frame=''>-3.28496 4.96625 0 0 -0 0</pose>
     </model>
     <state world_name='default'>
-      <sim_time>852 126000000</sim_time>
-      <real_time>85 119224256</real_time>
-      <wall_time>1515079254 714376382</wall_time>
-      <iterations>66623</iterations>
+
       <model name='House 1'>
         <pose frame=''>0.798657 26.657 0 0 -0 0</pose>
         <scale>1 1 1</scale>
